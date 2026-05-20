@@ -59,7 +59,7 @@ OrbitBlock          = "orbit" Identifier Block ;
 DriftStatement      = "drift" Identifier "->" | "into" Identifier
                     | "drift" Identifier "->" | "into" "shared(" Identifier, Identifier ")"
                     | "drift" Identifier "->" | "into" "sync(" Identifier, Identifier ")" ;
-DecayBlock          = "decay" Block | "decay" Identifier Block ;
+DecayBlock          = "decay" Block | "decay" Identifier ;
 
 NovaDecl            = "nova" Identifier "receives" "(" ParameterList ")" Block ;
 FireStatement       = "fire" Identifier "(" [ ArgumentList ] ")" ;
