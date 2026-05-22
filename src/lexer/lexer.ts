@@ -1,5 +1,5 @@
 import { alphCap, whitespace } from '../regex';
-import type { Token } from './token';
+import { TokenType, type Token } from './token';
 
 export class Lexer {
     private source = '';
@@ -18,17 +18,18 @@ export class Lexer {
     }
 
     private next(): string {
-        const char = this.source[this.cursor++] as string;
+        const char = this.source[this.cursor] as string;
         if (char === '\n') {
             this.line += 1;
             this.col = 1;
         } else {
             this.col += 1;
         }
+        this.cursor = this.cursor + 1;
         return char;
     }
 
-    private tokenize(): Token[] {
+    tokenize(): Token[] {
         const tokens: Token[] = [];
         let char = this.peek();
 
@@ -41,16 +42,36 @@ export class Lexer {
             }
 
             if (char === '"') {
-                tokens.push;
+                console.log('literal');
+
+                tokens.push(this.readLiteralString());
+                break;
             }
         }
+
+        return tokens;
     }
 
-    private readLiteralString(): string {
-        const literal = '';
+    private readLiteralString(): Token {
+        let literal = '';
         const startLine = this.line;
         const startCol = this.col;
+        const startCursor = this.cursor;
 
-        while (/alphCap|alphSmall|underscore/.test(this.peek())) this.next();
+        while (this.peek() !== '"') {
+            literal += this.peek();
+            this.next();
+        }
+
+        console.log(literal);
+        const token: Token = {
+            type: TokenType.StrLiteral,
+            value: literal,
+            line: startLine,
+            col: startCol,
+        };
+
+        console.log(token);
+        return token;
     }
 }
