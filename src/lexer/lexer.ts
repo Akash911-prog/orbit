@@ -1,4 +1,6 @@
-import { alphCap, whitespace } from '../regex';
+import { KEYWORDS } from '../constants';
+import { alphanum, alphCap, aplhaAll, whitespace } from '../regex';
+import { editDistance } from '../utility/distanceAutoCorrect';
 import { TokenType, type Token } from './token';
 
 export class Lexer {
@@ -29,6 +31,10 @@ export class Lexer {
         return char;
     }
 
+    private isEnd(): boolean {
+        return this.cursor < this.source.length ? false : true;
+    }
+
     tokenize(): Token[] {
         const tokens: Token[] = [];
 
@@ -42,7 +48,11 @@ export class Lexer {
 
             if (char === '"') {
                 tokens.push(this.readLiteralString());
-                break;
+                this.next();
+            }
+
+            if (aplhaAll.test(char)) {
+                tokens.push(this.readIdentifierString());
             }
         }
 
@@ -57,8 +67,10 @@ export class Lexer {
 
         while (this.peek() !== '"') {
             literal += this.peek();
+            if (this.isEnd()) break;
             this.next();
         }
+
         const token: Token = {
             type: TokenType.StrLiteral,
             value: literal,
@@ -67,5 +79,34 @@ export class Lexer {
         };
 
         return token;
+    }
+
+    private readIdentifierString(): Token {
+        let identifier = '';
+        const startLine = this.line;
+        const startCol = this.col;
+
+        while (!whitespace.test(this.peek()) && alphanum.test(this.peek())) {
+            identifier += this.peek();
+            if (this.isEnd()) break;
+            this.next();
+        }
+
+        const token: Token = {
+            type: TokenType.Identifier,
+            value: identifier,
+            line: startLine,
+            col: startCol,
+        };
+
+        return token;
+    }
+
+    private isKeyword(str: string) {
+        const word = KEYWORDS[str];
+
+        if (!word) {
+            editDistance(word);
+        }
     }
 }

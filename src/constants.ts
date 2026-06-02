@@ -50,6 +50,4 @@ export const KEYWORDS: Record<string, TokenType> = {
     float: TokenType.KeywordFloat,
     str: TokenType.KeywordStr,
     bool: TokenType.KeywordBool,
-    fn: TokenType.KeywordFn,
-    print: TokenType.KeywordPrint,
 };
