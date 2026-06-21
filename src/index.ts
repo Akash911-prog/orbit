@@ -1,10 +1,12 @@
+import { globalErrorBucket, initiateGlobals } from './globals';
 import { Lexer } from './lexer/lexer';
-import { initGlobalSymbolTable } from './symbolTable/symbolTable';
 import { editDistance } from './utility/distanceAutoCorrect';
 
-const globalTable = initGlobalSymbolTable();
+const src = 'true break';
 
-const lexer = new Lexer('"hello" world');
-console.log(lexer.tokenize());
+initiateGlobals(src);
 
-console.log(editDistance('orbit', 'orbit'));
+const lexer = new Lexer(src);
+
+// after things finished / temp sol for errors
+globalErrorBucket.showAll();

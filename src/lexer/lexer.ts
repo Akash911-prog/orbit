@@ -1,7 +1,11 @@
 import { KEYWORDS } from '../constants';
+import { globalErrorBucket } from '../globals';
 import { alphanum, alphCap, aplhaAll, whitespace } from '../regex';
 import { editDistance } from '../utility/distanceAutoCorrect';
 import { TokenType, type Token } from './token';
+
+import type { OrbitError } from '../errors/errorList';
+import { ErrorType } from '../errors/errorTypes';
 
 export class Lexer {
     private source = '';
@@ -35,40 +39,64 @@ export class Lexer {
         return this.cursor < this.source.length ? false : true;
     }
 
-    tokenize(): Token[] {
-        const tokens: Token[] = [];
-
-        while (this.cursor < this.source.length) {
-            const char = this.peek();
-
-            if (whitespace.test(char)) {
-                this.next();
-                continue;
-            }
-
-            if (char === '"') {
-                tokens.push(this.readLiteralString());
-                this.next();
-            }
-
-            if (aplhaAll.test(char)) {
-                tokens.push(this.readIdentifierString());
-            }
+    // --- THE BIG CHANGE ---
+    // Was: tokenize(): Token[] that drained the whole source in one go.
+    // Now: nextToken() computes exactly ONE token per call, called on-demand
+    // by the parser. Notice the actual scanning logic (readLiteralString,
+    // readIdentifierString) is UNCHANGED — only the driving loop moved.
+    nextToken(): Token {
+        // skip whitespace before every token, same as before
+        while (!this.isEnd() && whitespace.test(this.peek())) {
+            this.next();
         }
 
-        return tokens;
+        if (this.isEnd()) {
+            return {
+                type: TokenType.EOF,
+                value: '',
+                line: this.line,
+                col: this.col,
+            };
+        }
+
+        const char = this.peek();
+
+        if (char === '"') {
+            return this.readLiteralString();
+        }
+
+        if (aplhaAll.test(char)) {
+            return this.readIdentifierString();
+        }
+
+        // NOTE: you'll need a branch here for operators/punctuation
+        // (+, -, {, }, (, ), etc) — your current tokenize() doesn't
+        // handle these yet either, so this isn't a regression, just
+        // flagging it's the next thing you'll hit.
+        throw new Error(
+            `Unexpected character '${char}' at line ${this.line}, col ${this.col}`
+        );
     }
 
     private readLiteralString(): Token {
         let literal = '';
         const startLine = this.line;
         const startCol = this.col;
-        this.next();
+        this.next(); // consume opening "
 
         while (this.peek() !== '"') {
             literal += this.peek();
             if (this.isEnd()) break;
             this.next();
+        }
+
+        // FIX: this was missing before — you need to consume the
+        // closing quote HERE, inside the function, not in the caller.
+        // Your old tokenize() did `this.next()` after pushing the token,
+        // which worked by coincidence (since '"' fails the alpha check),
+        // but it's fragile. This is the correct place for it.
+        if (!this.isEnd()) {
+            this.next(); // consume closing "
         }
 
         const token: Token = {
@@ -86,10 +114,22 @@ export class Lexer {
         const startLine = this.line;
         const startCol = this.col;
 
-        while (!whitespace.test(this.peek()) && alphanum.test(this.peek())) {
+        while (!this.isEnd() && alphanum.test(this.peek())) {
             identifier += this.peek();
-            if (this.isEnd()) break;
             this.next();
+        }
+
+        const keyword = this.isKeyword(identifier, this.line, this.col);
+
+        if (keyword) {
+            const token: Token = {
+                type: keyword.type,
+                value: keyword.value,
+                line: startLine,
+                col: startCol,
+            };
+
+            return token;
         }
 
         const token: Token = {
@@ -102,11 +142,38 @@ export class Lexer {
         return token;
     }
 
-    private isKeyword(str: string) {
+    private isKeyword(
+        str: string,
+        line: number,
+        col: number
+    ): { type: TokenType; value: string } | null {
         const word = KEYWORDS[str];
 
         if (!word) {
-            editDistance(word);
+            for (const key in KEYWORDS) {
+                if (!Object.hasOwn(KEYWORDS, key)) continue;
+
+                const keyword = KEYWORDS[key]!;
+                const { passesConfidence } = editDistance(str, keyword);
+
+                if (passesConfidence) {
+                    const error: OrbitError = {
+                        type: ErrorType.ReferenceError,
+                        message: `Did you mean ${keyword}?`,
+                        line: line,
+                        col: col,
+                        length: str.length,
+                    };
+                    globalErrorBucket.add(error);
+                }
+            }
+            return null;
         }
+
+        if (['true', 'false'].includes(word)) {
+            return { type: TokenType.BoolLiteral, value: word };
+        }
+
+        return { type: word, value: word };
     }
 }

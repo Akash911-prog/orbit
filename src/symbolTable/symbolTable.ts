@@ -26,7 +26,7 @@ type StructEntry = {
     methods: FunctionEntry[];
 };
 
-class SymbolTable {
+export class SymbolTable {
     private table: Map<string, SymbolEntry>;
     private parent: SymbolTable | null;
 

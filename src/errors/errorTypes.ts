@@ -6,7 +6,4 @@ export enum ErrorType {
     RuntimeError = 'RUNTIME_ERROR',
     LogicalError = 'LOGICAL_ERROR',
     CompilationError = 'COMPILATION',
-
-    // --- LEXER / AUTOCORRECT LAYER ---
-    MispelledIdentifier = 'MISPELLED_IDENTIFIER', // A token that closely matches a known keyword or variable
 }

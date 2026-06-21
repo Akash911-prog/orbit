@@ -85,9 +85,9 @@ function getKeyboardDistance(charA: string, charB: string): number {
 
     if (!cordA || !cordB) return 1.0;
 
-    const distance = Math.sqrt(
-        (cordB[0] - cordA[0]) ** 2 + (cordB[1] - cordA[1]) ** 2
-    );
+    const distance =
+        Math.sqrt((cordB[0] - cordA[0]) ** 2 + (cordB[1] - cordA[1]) ** 2) -
+        1.5;
 
-    return distance;
+    return Math.max(distance, 0);
 }
