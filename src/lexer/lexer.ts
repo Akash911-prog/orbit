@@ -1,6 +1,14 @@
 import { KEYWORDS } from '../constants';
 import { globalErrorBucket } from '../globals';
-import { alphanum, alphCap, aplhaAll, whitespace } from '../regex';
+import {
+    alphanum,
+    alphCap,
+    aplhaAll,
+    digit,
+    digitAndDot,
+    symbolStart,
+    whitespace,
+} from '../regex';
 import { editDistance } from '../utility/distanceAutoCorrect';
 import { TokenType, type Token } from './token';
 
@@ -39,11 +47,6 @@ export class Lexer {
         return this.cursor < this.source.length ? false : true;
     }
 
-    // --- THE BIG CHANGE ---
-    // Was: tokenize(): Token[] that drained the whole source in one go.
-    // Now: nextToken() computes exactly ONE token per call, called on-demand
-    // by the parser. Notice the actual scanning logic (readLiteralString,
-    // readIdentifierString) is UNCHANGED — only the driving loop moved.
     nextToken(): Token {
         // skip whitespace before every token, same as before
         while (!this.isEnd() && whitespace.test(this.peek())) {
@@ -69,7 +72,14 @@ export class Lexer {
             return this.readIdentifierString();
         }
 
-        // NOTE: you'll need a branch here for operators/punctuation
+        if (digit.test(char)) {
+            return this.readNumber();
+        }
+
+        if (symbolStart.test(char)) {
+        }
+
+        // TODO: you'll need a branch here for operators/punctuation
         // (+, -, {, }, (, ), etc) — your current tokenize() doesn't
         // handle these yet either, so this isn't a regression, just
         // flagging it's the next thing you'll hit.
@@ -175,5 +185,31 @@ export class Lexer {
         }
 
         return { type: word, value: word };
+    }
+
+    private readNumber(): Token {
+        let number = '';
+        const startLine = this.line;
+        const startCol = this.col;
+
+        let tokenType = TokenType.IntLiteral;
+
+        while (!this.isEnd() && digitAndDot.test(this.peek())) {
+            number += this.peek();
+            this.next();
+        }
+
+        if (number.includes('.')) {
+            tokenType = TokenType.FloatLiteral;
+        }
+
+        const token: Token = {
+            type: tokenType,
+            value: number,
+            line: startLine,
+            col: startCol,
+        };
+
+        return token;
     }
 }

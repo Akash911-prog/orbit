@@ -45,8 +45,8 @@ All keywords come from one generic lookup in `isKeyword()` — any string key pr
 Nothing in `nextToken()` branches on these characters yet — hitting any of them currently throws `Unexpected character` from the fallthrough at the bottom of `nextToken()`.
 
 **Literals**
-- [ ] `IntLiteral` — digits — **highest priority, no number lexing exists at all right now**
-- [ ] `FloatLiteral` — digits + `.` — blocked on IntLiteral logic existing first
+- [x] `IntLiteral` — digits — **highest priority, no number lexing exists at all right now**
+- [x] `FloatLiteral` — digits + `.` — blocked on IntLiteral logic existing first
 
 **Member access / ranges**
 - [ ] `Dot` — `.`
