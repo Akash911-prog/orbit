@@ -88,6 +88,8 @@ export enum TokenType {
 
     // End of File
     EOF = 'EOF',
+
+    Error = 'Error',
 }
 
 export interface Token {

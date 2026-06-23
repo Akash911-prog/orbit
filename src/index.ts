@@ -3,7 +3,16 @@ import { Lexer } from './lexer/lexer';
 import { TokenType } from './lexer/token';
 import { editDistance } from './utility/distanceAutoCorrect';
 
-const src = ' 48588  203949.4545';
+// src/index.ts
+const filePath = process.argv[2];
+
+if (!filePath) {
+    console.error('Usage: bun run src/index.ts <file.orbit>');
+    process.exit(1);
+}
+
+const src = await Bun.file(filePath).text();
+// ...feed `source` into your Lexer
 
 initiateGlobals(src);
 

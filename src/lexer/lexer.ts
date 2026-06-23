@@ -1,11 +1,47 @@
 import { KEYWORDS } from '../constants';
 import { globalErrorBucket } from '../globals';
 import {
+    Add,
     alphanum,
     alphCap,
     aplhaAll,
+    Arrow,
+    CloseBrace,
+    CloseBracket,
+    CloseParen,
+    Colon,
+    Comma,
+    Decrement,
     digit,
     digitAndDot,
+    Divide,
+    Dot,
+    DotDot,
+    DotDotEquals,
+    DoubleEquals,
+    Equals,
+    FatArrow,
+    GreaterThan,
+    GreaterThanEquals,
+    Increment,
+    LessThan,
+    LessThanEquals,
+    LogicalAnd,
+    LogicalNot,
+    LogicalOr,
+    MinusEquals,
+    Modulo,
+    Multiply,
+    NotEquals,
+    OpenBrace,
+    OpenBracket,
+    OpenParen,
+    PercentEquals,
+    PlusEquals,
+    Semicolon,
+    SlashEquals,
+    StarEquals,
+    Subtract,
     symbolStart,
     whitespace,
 } from '../regex';
@@ -77,6 +113,7 @@ export class Lexer {
         }
 
         if (symbolStart.test(char)) {
+            return this.readSymbols();
         }
 
         // TODO: you'll need a branch here for operators/punctuation
@@ -100,11 +137,6 @@ export class Lexer {
             this.next();
         }
 
-        // FIX: this was missing before — you need to consume the
-        // closing quote HERE, inside the function, not in the caller.
-        // Your old tokenize() did `this.next()` after pushing the token,
-        // which worked by coincidence (since '"' fails the alpha check),
-        // but it's fragile. This is the correct place for it.
         if (!this.isEnd()) {
             this.next(); // consume closing "
         }
@@ -191,21 +223,97 @@ export class Lexer {
         let number = '';
         const startLine = this.line;
         const startCol = this.col;
-
         let tokenType = TokenType.IntLiteral;
+        let sawDot = false;
 
         while (!this.isEnd() && digitAndDot.test(this.peek())) {
-            number += this.peek();
-            this.next();
-        }
+            const char = this.peek();
 
-        if (number.includes('.')) {
-            tokenType = TokenType.FloatLiteral;
+            if (char === '.') {
+                if (sawDot) break; // second dot — stop, don't consume it
+                sawDot = true;
+                tokenType = TokenType.FloatLiteral;
+            }
+
+            number += char;
+            this.next();
         }
 
         const token: Token = {
             type: tokenType,
             value: number,
+            line: startLine,
+            col: startCol,
+        };
+
+        return token;
+    }
+
+    private readSymbols(): Token {
+        let symbol = '';
+        const startLine = this.line;
+        const startCol = this.col;
+        while (!this.isEnd() && symbolStart.test(this.peek())) {
+            symbol += this.peek();
+            this.next();
+        }
+
+        let type: TokenType | null = null;
+
+        if (DotDotEquals.test(symbol)) type = TokenType.DotDotEquals;
+        else if (Arrow.test(symbol)) type = TokenType.Arrow;
+        else if (FatArrow.test(symbol)) type = TokenType.FatArrow;
+        else if (DotDot.test(symbol)) type = TokenType.DotDot;
+        else if (PlusEquals.test(symbol)) type = TokenType.PlusEquals;
+        else if (MinusEquals.test(symbol)) type = TokenType.MinusEquals;
+        else if (StarEquals.test(symbol)) type = TokenType.StarEquals;
+        else if (SlashEquals.test(symbol)) type = TokenType.SlashEquals;
+        else if (PercentEquals.test(symbol)) type = TokenType.PercentEquals;
+        else if (LogicalAnd.test(symbol)) type = TokenType.LogicalAnd;
+        else if (LogicalOr.test(symbol)) type = TokenType.LogicalOr;
+        else if (DoubleEquals.test(symbol)) type = TokenType.DoubleEquals;
+        else if (NotEquals.test(symbol)) type = TokenType.NotEquals;
+        else if (LessThanEquals.test(symbol)) type = TokenType.LessThanEquals;
+        else if (GreaterThanEquals.test(symbol))
+            type = TokenType.GreaterThanEquals;
+        else if (Increment.test(symbol)) type = TokenType.Increment;
+        else if (Decrement.test(symbol)) type = TokenType.Decrement;
+        else if (Dot.test(symbol)) type = TokenType.Dot;
+        else if (OpenBracket.test(symbol)) type = TokenType.OpenBracket;
+        else if (CloseBracket.test(symbol)) type = TokenType.CloseBracket;
+        else if (Colon.test(symbol)) type = TokenType.Colon;
+        else if (OpenBrace.test(symbol)) type = TokenType.OpenBrace;
+        else if (CloseBrace.test(symbol)) type = TokenType.CloseBrace;
+        else if (OpenParen.test(symbol)) type = TokenType.OpenParen;
+        else if (CloseParen.test(symbol)) type = TokenType.CloseParen;
+        else if (Comma.test(symbol)) type = TokenType.Comma;
+        else if (Semicolon.test(symbol)) type = TokenType.Semicolon;
+        else if (Equals.test(symbol)) type = TokenType.Equals;
+        else if (Add.test(symbol)) type = TokenType.Add;
+        else if (Subtract.test(symbol)) type = TokenType.Subtract;
+        else if (Multiply.test(symbol)) type = TokenType.Multiply;
+        else if (Divide.test(symbol)) type = TokenType.Divide;
+        else if (Modulo.test(symbol)) type = TokenType.Modulo;
+        else if (LessThan.test(symbol)) type = TokenType.LessThan;
+        else if (GreaterThan.test(symbol)) type = TokenType.GreaterThan;
+        else if (LogicalNot.test(symbol)) type = TokenType.LogicalNot;
+
+        if (!type) {
+            const error: OrbitError = {
+                type: ErrorType.SyntaxError, // <- check this exists in ErrorType; guessing based on isKeyword's ReferenceError usage
+                message: `Unknown symbol: '${symbol}'`,
+                line: startLine,
+                col: startCol,
+                length: symbol.length,
+            };
+            globalErrorBucket.add(error);
+
+            type = TokenType.Error; // <- check this exists in your TokenType enum
+        }
+
+        const token: Token = {
+            type,
+            value: symbol,
             line: startLine,
             col: startCol,
         };

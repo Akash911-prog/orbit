@@ -49,34 +49,34 @@ Nothing in `nextToken()` branches on these characters yet — hitting any of the
 - [x] `FloatLiteral` — digits + `.` — blocked on IntLiteral logic existing first
 
 **Member access / ranges**
-- [ ] `Dot` — `.`
-- [ ] `DotDot` — `..`
-- [ ] `DotDotEquals` — `..=`
+- [x] `Dot` — `.`
+- [x] `DotDot` — `..`
+- [x] `DotDotEquals` — `..=`
 
 **Arrows**
-- [ ] `Arrow` — `->` (drift / return type, semantics still undecided per your own enum comment)
-- [ ] `FatArrow` — `=>` (match arms)
+- [x] `Arrow` — `->` (drift / return type, semantics still undecided per your own enum comment)
+- [x] `FatArrow` — `=>` (match arms)
 
 **Brackets / braces / parens**
-- [ ] `OpenBracket` — `[`
-- [ ] `CloseBracket` — `]`
-- [ ] `OpenBrace` — `{`
-- [ ] `CloseBrace` — `}`
-- [ ] `OpenParen` — `(`
-- [ ] `CloseParen` — `)`
+- [x] `OpenBracket` — `[`
+- [x] `CloseBracket` — `]`
+- [x] `OpenBrace` — `{`
+- [x] `CloseBrace` — `}`
+- [x] `OpenParen` — `(`
+- [x] `CloseParen` — `)`
 
 **Separators**
-- [ ] `Colon` — `:`
-- [ ] `Comma` — `,`
-- [ ] `Semicolon` — `;`
+- [x] `Colon` — `:`
+- [x] `Comma` — `,`
+- [x] `Semicolon` — `;`
 
 **Assignment**
-- [ ] `Equals` — `=`
-- [ ] `PlusEquals` — `+=`
-- [ ] `MinusEquals` — `-=`
-- [ ] `StarEquals` — `*=`
-- [ ] `SlashEquals` — `/=`
-- [ ] `PercentEquals` — `%=`
+- [x] `Equals` — `=`
+- [x] `PlusEquals` — `+=`
+- [x] `MinusEquals` — `-=`
+- [x] `StarEquals` — `*=`
+- [x] `SlashEquals` — `/=`
+- [x] `PercentEquals` — `%=`
 
 **Arithmetic**
 - [ ] `Add` — `+`
@@ -91,16 +91,16 @@ Nothing in `nextToken()` branches on these characters yet — hitting any of the
 - [ ] `LogicalNot` — `!`
 
 **Comparison**
-- [ ] `DoubleEquals` — `==`
-- [ ] `NotEquals` — `!=`
-- [ ] `LessThan` — `<`
-- [ ] `LessThanEquals` — `<=`
-- [ ] `GreaterThan` — `>`
-- [ ] `GreaterThanEquals` — `>=`
+- [x] `DoubleEquals` — `==`
+- [x] `NotEquals` — `!=`
+- [x] `LessThan` — `<`
+- [x] `LessThanEquals` — `<=`
+- [x] `GreaterThan` — `>`
+- [x] `GreaterThanEquals` — `>=`
 
 **Unary**
-- [ ] `Increment` — `++`
-- [ ] `Decrement` — `--`
+- [x] `Increment` — `++`
+- [x] `Decrement` — `--`
 
 That's **every symbol/punctuator/operator token in the enum — zero implemented.** The lexer currently only handles whitespace, identifiers/keywords, and string literals.
 
