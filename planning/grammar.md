@@ -41,12 +41,12 @@ Statement           = VariableDecl
                     | ContinueStatement
                     | ExpressionStatement ;
 
-VariableDecl        = ( "let" | "var" ) Identifier ":" Type "=" Expression ;
-Assignment          = Identifier { "." Identifier } "=" Expression ;
-ReturnStatement     = "return" [ Expression ] ;
-BreakStatement      = "break" [ Identifier ] ;         (* Identifier for labeled loop break *)
-ContinueStatement   = "continue" ;
-ExpressionStatement = Expression ;
+VariableDecl        = ( "let" | "var" ) Identifier ":" Type "=" Expression ";";
+Assignment          = Identifier { "." Identifier } "=" Expression ";";
+ReturnStatement     = "return" [ Expression ] ";";
+BreakStatement      = "break" [ Identifier ] ";";         (* Identifier for labeled loop break *)
+ContinueStatement   = "continue" ";";
+ExpressionStatement = Expression ";";
 ```
 
 ---
@@ -81,9 +81,9 @@ MatchPattern        = Literal
 ```ebnf
 OrbitBlock          = "orbit" Identifier Block ;
 
-DriftStatement      = "drift" Identifier ( "->" | "into" ) DriftTarget
-                    | "drift" Identifier ("->" | "into" ) "shared" "(" Identifier "," Identifier ")"
-                    | "drift" Identifier ("->" | "into" ) "sync"   "(" Identifier "," Identifier ")" ;
+DriftStatement      = "drift" Identifier ( "->" | "into" ) DriftTarget ";"
+                    | "drift" Identifier ("->" | "into" ) "shared" "(" Identifier "," Identifier ")" ";"
+                    | "drift" Identifier ("->" | "into" ) "sync"   "(" Identifier "," Identifier ")" ";";
 
 DriftTarget         = Identifier ;                          (* exclusive drift *)
 
@@ -91,9 +91,9 @@ DecayBlock          = "decay" [ Identifier ] Block ;
                     (* no identifier = nearest orbit *)
                     (* with identifier = targeted orbit, inner orbits decay first *)
 
-NovaDecl            = "nova" Identifier "receives" "(" [ ParameterList ] ")" Block ;
+NovaDecl            = "nova" Identifier "(" [ ParameterList ] ")" Block ;
 
-FireStatement       = "fire" Identifier "(" [ ArgumentList ] ")" ;
+FireStatement       = "fire" Identifier "(" [ ArgumentList ] ")" ";";
 ```
 
 ---
@@ -109,7 +109,7 @@ FunctionDecl        = "fn" Identifier [ "<" Identifier ">" ]
 ParameterList       = Parameter { "," Parameter } ;
 Parameter           = Identifier ":" Type ;
 
-FunctionCall        = Identifier "(" [ ArgumentList ] ")" ;
+FunctionCall        = Identifier "(" [ ArgumentList ] ")";
 ArgumentList        = Expression { "," Expression } ;
 ```
 
@@ -247,5 +247,5 @@ Result  map
 - **Constructor patterns in match:** `ok(data)` and `err(e)` are constructor patterns, enabling clean `Result` destructuring directly in match arms.
 - **Left-recursive chaining:** Member access and method calls chain left-to-right in `PrimaryExpr` via iteration, avoiding left-recursion in the recursive descent parser.
 - **Break with label:** `break identifier` targets a specific named loop, equivalent to labeled break in other languages.
-- **Drift operators:** `->` and `into` are interchangeable exclusive drift forms. `~>>` is shared-read drift. `~>*` is synchronized drift requiring a mutex owned by the common parent orbit.
+- **Drift operators:** `->` and `into` are interchangeable exclusive drift forms. `shared()` is shared-read drift. `sync()` is synchronized drift requiring a mutex owned by the common parent orbit.
 ```

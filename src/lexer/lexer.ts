@@ -118,10 +118,6 @@ export class Lexer {
             return this.readSymbols();
         }
 
-        // TODO: you'll need a branch here for operators/punctuation
-        // (+, -, {, }, (, ), etc) — your current tokenize() doesn't
-        // handle these yet either, so this isn't a regression, just
-        // flagging it's the next thing you'll hit.
         throw new Error(
             `Unexpected character '${char}' at line ${this.line}, col ${this.col}`
         );

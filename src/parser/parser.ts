@@ -5,18 +5,27 @@ import { TokenType, type Token } from '../lexer/token';
 import type {
     Assignment,
     Block,
+    BreakStatement,
+    ContinueStatement,
+    DecayBlock,
     DriftStatement,
     Expression,
     ExpressionStatement,
+    FireStatement,
     ForStatement,
+    FunctionDecl,
     IfStatement,
     Literal,
     LoopStatement,
     MatchArm,
     MatchPattern,
     MatchStatement,
+    NovaDecl,
     OrbitBlock,
+    Parameter,
     Program,
+    ReturnStatement,
+    RootOrbitDecl,
     Statement,
     TopLevelDeclaration,
     TypeNode,
@@ -103,6 +112,7 @@ export class Parser {
         const type: TypeNode = this.parseType();
         this.expect([TokenType.Equals]);
         const expression: Expression = this.parseExpression();
+        this.expect([TokenType.Semicolon]);
 
         return {
             type: 'VariableDecl',
@@ -214,14 +224,47 @@ export class Parser {
     }
 
     private parseStructDecl(): TopLevelDeclaration {
+        //TODO: add parser
         throw new Error('Method not implemented.');
     }
 
-    private parseNovaDecl(): TopLevelDeclaration {
-        throw new Error('Method not implemented.');
+    private parseNovaDecl(): NovaDecl {
+        this.expect([TokenType.KeywordNova]);
+        const name = this.expect([TokenType.Identifier]).value;
+        let paramList: Parameter[] = [];
+        this.expect([TokenType.OpenParen]);
+
+        if (this.current.type !== TokenType.CloseParen) {
+            paramList = this.parseParameterList();
+        }
+        this.consume();
+        const body = this.parseBlock();
+
+        return {
+            type: 'NovaDecl',
+            name,
+            body,
+            parameters: paramList,
+        };
     }
 
-    private parseRootOrbitDecl(): TopLevelDeclaration {
+    private parseParameterList(): Parameter[] {
+        let paramList: Parameter[] = [];
+        paramList.push(this.parseParameter());
+        while (this.current.type === TokenType.Comma) {
+            paramList.push(this.parseParameter());
+        }
+        return paramList;
+    }
+
+    private parseParameter(): Parameter {
+        const name = this.expect([TokenType.Identifier]).value;
+        this.expect([TokenType.Colon]);
+        const type = this.parseType();
+        return { type: 'Parameter', name, paramType: type };
+    }
+
+    private parseRootOrbitDecl(): RootOrbitDecl {
         this.expect([TokenType.KeywordOrbit]);
         this.expect([TokenType.KeywordMain]);
 
@@ -230,8 +273,35 @@ export class Parser {
         return { type: 'RootOrbitDecl', body: block };
     }
 
-    private parseFunctionDecl(): TopLevelDeclaration {
-        throw new Error('Method not implemented.');
+    private parseFunctionDecl(): FunctionDecl {
+        this.expect([TokenType.KeywordFn]);
+        const name = this.expect([TokenType.Identifier]).value;
+        let generic: string | null = null;
+        if (this.current.type === TokenType.LessThan) {
+            this.consume();
+            generic = this.expect([TokenType.Identifier]).value;
+            this.expect([TokenType.GreaterThan]);
+        }
+        let paramList: Parameter[] = [];
+        let typeArg: TypeNode | null = null;
+        this.expect([TokenType.OpenParen]);
+        if (this.current.type !== TokenType.CloseParen) {
+            paramList = this.parseParameterList();
+        }
+        this.expect([TokenType.CloseParen]);
+        if (this.current.type === TokenType.Colon) {
+            this.consume();
+            typeArg = this.parseType();
+        }
+        const body = this.parseBlock();
+        return {
+            type: 'FunctionDecl',
+            name,
+            body,
+            generic,
+            parameters: paramList,
+            returnType: typeArg,
+        };
     }
 
     private parseBlock(): Block {
@@ -299,7 +369,7 @@ export class Parser {
 
     private parseExpressionStatement(): ExpressionStatement {
         const expression = this.parseExpression();
-
+        this.expect([TokenType.Semicolon]);
         return {
             type: 'ExpressionStatement',
             expression: expression,
@@ -553,20 +623,61 @@ export class Parser {
         };
     }
 
-    private parseDecayBlock(): Statement {
-        throw new Error('Method not implemented.');
+    private parseDecayBlock(): DecayBlock {
+        this.expect([TokenType.KeywordDecay]);
+        let target: string | null = null;
+        if (this.current.type === TokenType.Identifier) {
+            target = this.consume().value;
+        }
+        const body = this.parseBlock();
+        return {
+            type: 'DecayBlock',
+            target,
+            body,
+        };
     }
-    private parseFireStatement(): Statement {
-        throw new Error('Method not implemented.');
+
+    private parseFireStatement(): FireStatement {
+        this.expect([TokenType.KeywordFire]);
+        const name = this.expect([TokenType.Identifier]).value;
+        this.expect([TokenType.OpenParen]);
+        let expressions: Expression[] = [];
+        if (this.current.type !== TokenType.CloseParen) {
+            expressions = this.parseArgumentList();
+        }
+        this.expect([TokenType.CloseParen]);
+        this.expect([TokenType.Semicolon]);
+        return {
+            type: 'FireStatement',
+            args: expressions,
+            name,
+        };
     }
-    private parseReturnStatement(): Statement {
-        throw new Error('Method not implemented.');
+
+    private parseReturnStatement(): ReturnStatement {
+        this.expect([TokenType.KeywordReturn]);
+        let expr: Expression | null = null;
+        if (this.current.type !== TokenType.Semicolon) {
+            expr = this.parseExpression();
+        }
+        this.expect([TokenType.Semicolon]);
+        return { type: 'ReturnStatement', value: expr };
     }
-    private parseBreakStatement(): Statement {
-        throw new Error('Method not implemented.');
+
+    private parseBreakStatement(): BreakStatement {
+        this.expect([TokenType.KeywordBreak]);
+        let label: string | null = null;
+        if (this.current.type !== TokenType.Semicolon) {
+            label = this.expect([TokenType.Identifier]).value;
+        }
+        this.expect([TokenType.Semicolon]);
+        return { type: 'BreakStatement', label };
     }
-    private parseContinueStatement(): Statement {
-        throw new Error('Method not implemented.');
+
+    private parseContinueStatement(): ContinueStatement {
+        this.expect([TokenType.KeywordContinue]);
+        this.expect([TokenType.Semicolon]);
+        return { type: 'ContinueStatement' };
     }
 
     private parseIdentifierStartedStatement():
@@ -578,6 +689,7 @@ export class Parser {
             this.consume(); // eat "="
             const value = this.parseExpression();
             const target = this.expressionToAssignmentTarget(expr);
+            this.expect([TokenType.Semicolon]);
             return { type: 'Assignment', target, value };
         }
 
